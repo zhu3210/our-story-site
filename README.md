@@ -218,3 +218,12 @@ npm.cmd run deploy
 | `src/worker.js` | 密码门 |
 | `wrangler.jsonc` | Cloudflare 配置，`SITE_TITLE` 是登录页显示的标题 |
 | `.dev.vars` | 本机预览用的密码 |
+
+## 许可证
+
+本项目的代码以 [MIT 许可证](LICENSE) 开源，可以自由使用、修改和分享，保留版权声明即可。
+
+用到的第三方内容各有自己的许可，不包含在这个仓库里（`npm install` 时下载）：
+
+- 地图引擎 [MapLibre GL JS](https://github.com/maplibre/maplibre-gl-js)（BSD-3-Clause）、视频播放 [hls.js](https://github.com/video-dev/hls.js)（Apache-2.0）、读取照片信息 [exifr](https://github.com/MikeKovarik/exifr)（MIT）、HEIC 转换 [heic2any](https://github.com/alexcorvi/heic2any)（MIT）、浏览器内视频压缩 [Mediabunny](https://github.com/Vanilagy/mediabunny)（MPL-2.0）。
+- 地图数据 © [OpenStreetMap](https://www.openstreetmap.org/copyright) 贡献者（ODbL）；矢量底图来自 [OpenFreeMap](https://openfreemap.org/)；水彩底图 © [Stamen Design](https://stamen.com)（CC BY 3.0），由 [Cooper Hewitt, Smithsonian Design Museum](https://watercolormaps.collection.cooperhewitt.org/) 保存；地名识别使用 [Nominatim](https://operations.osmfoundation.org/policies/nominatim/)（请遵守它的使用条款）。
