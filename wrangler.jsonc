@@ -1,0 +1,18 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "our-story",
+	"main": "src/worker.js",
+	"compatibility_date": "2026-09-01",
+	"assets": {
+		"directory": "./public",
+		"binding": "ASSETS",
+		// 每个请求（包括照片和视频）都先经过 src/worker.js 的密码检查
+		"run_worker_first": true
+	},
+	"vars": {
+		// 登录页上显示的标题（没密码的人也能看到登录页，建议不要写真实姓名）
+		"SITE_TITLE": "我们的故事"
+	}
+	// 存照片的 KV（binding PHOTOS）和存地点信息的 D1（binding DB）用 README「第一次上线」第 3 步的命令创建，
+	// 命令会自动把它们加到这里。
+}

@@ -1,0 +1,12 @@
+node_modules/
+.wrangler/
+.dev.vars
+.cache/
+backups/
+public/media/
+public/data/
+public/vendor/
+# 照片、视频原件只留在本机，不进 Git
+content/
+# 别人网站的截图（只是选风格时参考用）
+design/refs/

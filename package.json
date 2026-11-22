@@ -1,0 +1,19 @@
+{
+  "name": "our-story",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "postinstall": "node tools/vendor.mjs",
+    "build": "node tools/vendor.mjs && uv run tools/build.py",
+    "dev": "wrangler dev --port 8787",
+    "deploy": "node tools/vendor.mjs && uv run tools/build.py && wrangler deploy"
+  },
+  "devDependencies": {
+    "exifr": "^7.1.3",
+    "heic2any": "^0.0.4",
+    "hls.js": "^1.7.4",
+    "maplibre-gl": "^5.24.1",
+    "mediabunny": "^1.66.2",
+    "wrangler": "^4.166.0"
+  }
+}

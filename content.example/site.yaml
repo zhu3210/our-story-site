@@ -1,0 +1,8 @@
+# 网站基本信息：复制整个 content.example 文件夹为 content，再改这里（改完运行 npm run build）
+title: 我们的故事              # 网站顶部的大标题，比如 "A ❤️ B"
+couple: ""                     # 标题下面那行的名字，可以留空
+start_date: 2024-02-14         # 在一起的那一天（网页上的天数每天自动更新）
+# 地图底图（复古风格用这个重新配色）
+map_style: https://tiles.openfreemap.org/styles/positron
+map_language: zh
+map_theme: watercolor          # 默认地图风格：watercolor（水彩）或 vintage（复古）
