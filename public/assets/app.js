@@ -41,6 +41,24 @@ async function init() {
   up.addEventListener('click', () => openUpload(state.selected));
   window.addEventListener('hashchange', route);
   route();
+  refreshWhenBack();
+}
+
+// 从手机主屏幕打开时，系统常常直接恢复上次的页面，也没有刷新按钮。
+// 离开超过 15 分钟再回来，就悄悄重新读一次数据（另一半可能刚上传了照片）；正在编辑或看大图时不打扰。
+function refreshWhenBack() {
+  let hiddenAt = 0;
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      hiddenAt = Date.now();
+      return;
+    }
+    const away = hiddenAt ? Date.now() - hiddenAt : 0;
+    hiddenAt = 0;
+    if (away < 15 * 60 * 1000) return;
+    const busy = !$('#modal').hidden || !$('#lightbox').hidden || !$('#player').hidden || state.sel.size > 0;
+    if (!busy) reload().catch(() => {});
+  });
 }
 
 // ---------- 数据：电脑上生成的 story.json + 网站上上传的内容 ----------
@@ -207,6 +225,8 @@ const go = (hash) => {
 function renderHeader() {
   const { site } = state.data;
   document.title = site.title;
+  // 添加到主屏幕时图标下面显示的名字（去掉空格更紧凑）
+  $('meta[name="apple-mobile-web-app-title"]')?.setAttribute('content', site.title.replace(/\s+/g, ''));
   $('#site-title').textContent = site.title;
   const sub = $('#site-sub');
   const daysEl = h('b', { class: 'days' });

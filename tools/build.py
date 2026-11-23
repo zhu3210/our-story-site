@@ -14,6 +14,7 @@
 
 输出（会被部署上网）：
   public/data/story.json            网站读取的数据
+  public/data/manifest.webmanifest  添加到手机主屏幕时用的名字和图标
   public/media/p/...                压缩后的照片和缩略图（去掉了 EXIF 信息）
   public/media/v/...                切成小段的视频（HLS），每段远小于 Cloudflare 25 MB 的单文件上限
 """
@@ -70,6 +71,7 @@ def main() -> None:
     (PUBLIC / "data").mkdir(parents=True, exist_ok=True)
     data = {"site": site, "places": places, "videos": videos}
     (PUBLIC / "data" / "story.json").write_text(json.dumps(data, ensure_ascii=False, indent=1), "utf-8")
+    write_manifest(site)
 
     n_photos = sum(len(p["photos"]) for p in places)
     n_files = sum(1 for f in PUBLIC.rglob("*") if f.is_file())
@@ -92,6 +94,28 @@ def load_site() -> dict:
         "map_language": raw.get("map_language") or "zh",
         "map_theme": raw.get("map_theme") or "watercolor",
     }
+
+
+# ---------- 添加到手机主屏幕用的说明文件 ----------
+def write_manifest(site: dict) -> None:
+    # 放在 data/ 里，和照片数据一样要登录后才能读到（标题里可能有你们的名字）
+    manifest = {
+        "id": "/",
+        "name": site["title"],
+        "short_name": re.sub(r"\s+", "", site["title"]),  # 主屏幕图标下面的字，去掉空格更紧凑
+        "start_url": "/",
+        "scope": "/",
+        "display": "standalone",
+        "background_color": "#fcf0f3",
+        "theme_color": "#fcf0f3",
+        "lang": "zh-CN",
+        "icons": [
+            {"src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png"},
+            {"src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png"},
+            {"src": "/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"},
+        ],
+    }
+    (PUBLIC / "data" / "manifest.webmanifest").write_text(json.dumps(manifest, ensure_ascii=False, indent=1), "utf-8")
 
 
 # ---------- 地点和照片 ----------

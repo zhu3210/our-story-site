@@ -5,7 +5,7 @@
 // 改密码后，所有已登录的设备都会自动退出。
 
 const COOKIE = 'story_session';
-const MAX_AGE = 60 * 60 * 24 * 30; // 登录一次保持 30 天
+const MAX_AGE = 60 * 60 * 24 * 30; // 登录一次保持 30 天；期间每天第一次打开都会再顺延 30 天
 const enc = new TextEncoder();
 
 export default {
@@ -23,6 +23,13 @@ export default {
         headers: { 'content-type': 'text/plain; charset=utf-8' },
       });
     }
+    if (url.pathname.startsWith('/icons/')) {
+      // 主屏幕图标只是一颗爱心，不含个人信息：不登录也能取（登录页和手机系统要用）
+      const res = await env.ASSETS.fetch(request);
+      const out = new Response(res.body, res);
+      out.headers.set('Cache-Control', 'public, max-age=86400');
+      return out;
+    }
     if (url.pathname === '/login') {
       return request.method === 'POST' ? handleLogin(request, env, url) : loginPage(env);
     }
@@ -33,7 +40,8 @@ export default {
       });
     }
 
-    if (!(await isLoggedIn(request, password))) {
+    const exp = await sessionExpiry(request, password);
+    if (!exp) {
       const wantsPage = request.method === 'GET' && (request.headers.get('accept') || '').includes('text/html');
       if (wantsPage) return Response.redirect(new URL('/login', url).toString(), 302);
       return new Response('Unauthorized', { status: 401 });
@@ -56,6 +64,11 @@ export default {
     const immutable = url.pathname.startsWith('/media/') || url.pathname.startsWith('/vendor/');
     out.headers.set('Cache-Control', immutable ? 'private, max-age=2592000, immutable' : 'private, no-cache');
     out.headers.set('X-Robots-Tag', 'noindex, nofollow');
+    // 每天第一次打开页面时把登录顺延 30 天：常用的手机（包括主屏幕上的图标）就不会突然要重新输密码
+    const html = (out.headers.get('content-type') || '').includes('text/html');
+    if (html && exp - Date.now() / 1000 < MAX_AGE - 86400) {
+      out.headers.append('Set-Cookie', await sessionCookie(password, url));
+    }
     return out;
   },
 };
@@ -520,24 +533,26 @@ async function handleLogin(request, env, url) {
     await new Promise((r) => setTimeout(r, 800)); // 拖慢暴力猜密码
     return loginPage(env, '密码不对哦，再想想？', 401);
   }
-  const exp = String(Math.floor(Date.now() / 1000) + MAX_AGE);
-  const token = `${exp}.${await hmac(sessionKey(env.SITE_PASSWORD), exp)}`;
-  const secure = url.protocol === 'https:' ? '; Secure' : '';
   return new Response(null, {
     status: 303,
-    headers: {
-      Location: '/',
-      'Set-Cookie': `${COOKIE}=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${MAX_AGE}${secure}`,
-    },
+    headers: { Location: '/', 'Set-Cookie': await sessionCookie(env.SITE_PASSWORD, url) },
   });
 }
 
-async function isLoggedIn(request, password) {
+async function sessionCookie(password, url) {
+  const exp = String(Math.floor(Date.now() / 1000) + MAX_AGE);
+  const token = `${exp}.${await hmac(sessionKey(password), exp)}`;
+  const secure = url.protocol === 'https:' ? '; Secure' : '';
+  return `${COOKIE}=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${MAX_AGE}${secure}`;
+}
+
+// 登录有效：返回到期时间（秒）；没登录或已过期：返回 0
+async function sessionExpiry(request, password) {
   const token = readCookie(request, COOKIE);
-  if (!token) return false;
+  if (!token) return 0;
   const [exp, sig] = token.split('.');
-  if (!exp || !sig || Number(exp) < Date.now() / 1000) return false;
-  return safeEqual(sig, await hmac(sessionKey(password), exp));
+  if (!exp || !sig || Number(exp) < Date.now() / 1000) return 0;
+  return safeEqual(sig, await hmac(sessionKey(password), exp)) ? Number(exp) : 0;
 }
 
 function sessionKey(password) {
@@ -581,6 +596,11 @@ function loginPage(env, error = '', status = 200) {
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <title>${title}</title>
+<meta name="theme-color" content="#fcf0f3">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="icon" type="image/png" sizes="64x64" href="/icons/favicon-64.png">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
 <style>
   :root { --bg:#fcf0f3; --card:rgba(255,250,251,.92); --text:#3d2a31; --muted:#9a7f88; --accent:#d4567a; --line:#f1d8e0;
     --grad:linear-gradient(135deg,#ee8aa6 0%,#d4567a 55%,#b23c62 100%); }
